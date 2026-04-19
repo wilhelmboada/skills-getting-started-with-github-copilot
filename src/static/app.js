@@ -25,6 +25,10 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          <p><strong>Participants:</strong></p>
+          <ul class="participants-list">
+            ${details.participants.length > 0 ? details.participants.map(email => `<li><span class="delete-icon" data-email="${email}">×</span>${email}</li>`).join('') : '<li>No participants yet.</li>'}
+          </ul>
         `;
 
         activitiesList.appendChild(activityCard);
@@ -83,4 +87,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize app
   fetchActivities();
+
+  // Handle delete participant
+  document.addEventListener('click', async (event) => {
+    if (event.target.classList.contains('delete-icon')) {
+      event.preventDefault();
+      const email = event.target.dataset.email;
+      const activityCard = event.target.closest('.activity-card');
+      const activityName = activityCard.querySelector('h4').textContent;
+
+      try {
+        const response = await fetch(`/activities/${encodeURIComponent(activityName)}/participants/${encodeURIComponent(email)}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          fetchActivities(); // Refresh the list
+        } else {
+          const result = await response.json();
+          alert(result.detail || 'Failed to unregister');
+        }
+      } catch (error) {
+        console.error('Error unregistering:', error);
+        alert('Failed to unregister. Please try again.');
+      }
+    }
+  });
 });
